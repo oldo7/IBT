@@ -104,6 +104,7 @@ const Controls = () => {
         [-sin(yRotAngle), 0, cos(yRotAngle)]
     ])
 
+    //tets
 
     //zjednodusenie maticoveho nasobenia
     var sMatrix1 = multiply(inMatrix,rotateYaxis);
