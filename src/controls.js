@@ -16,13 +16,13 @@ const Controls = () => {
     //vytvorenie rotacnej matice
     //nacitanie rotacnej matice TODO: nacitat zo suboru
     var alpha = -0.1704866598136265121;
-    var gamma = 0.3070029780899988792;
-    var beta = -0.07677646139145230531;
+    var beta = 0.3070029780899988792;
+    var gamma = -0.07677646139145230531;
 
     //nacitanie hodnot z transformacnej matice
-    var t1 = 0.25;
-    var t2 = -1.15;
-    var t3 = 5.8;
+    var t1 = -0.08166290388991392923;
+    var t2 = -0.06948978603737683557;
+    var t3 = 5.705343872886297518;
 
     //nacitanie hodnot z kalibracnej matice
     var inMatrix = matrix([ 
@@ -79,9 +79,9 @@ const Controls = () => {
         [0,0,1]
     ])
 
-    var zRotAngle = -0.02;
-    var xRotAngle = -0.02;
-    var yRotAngle = 0.031;
+    var xRotAngle = -0.0029755535;
+    var yRotAngle = 0.0053582128;
+    var zRotAngle = -0.001340002;
 
     //otocenie na osi Z
     var rotateZaxis = matrix([
@@ -104,16 +104,23 @@ const Controls = () => {
         [-sin(yRotAngle), 0, cos(yRotAngle)]
     ])
 
+
     //tets
 
     //zjednodusenie maticoveho nasobenia
-    var sMatrix1 = multiply(inMatrix,rotateYaxis);
-    var sMatrix2 = multiply(sMatrix1, rotateXaxis);
-    var sMatrix3 = multiply(sMatrix2, rotateZaxis);
+    //var sMatrix1 = multiply(inMatrix,rotateXaxis); // posledna
+    var sMatrix2 = multiply(rotateZaxis, rotateYaxis); //druha
+    var sMatrix3 = multiply(sMatrix2, rotateXaxis); // prva
     var sMatrix4 = multiply(sMatrix3, swapCoords);
-    var sMatrix5 = multiply(mirrorXYCoordinate, sMatrix4);
 
-    console.log(sMatrix4);
+    var translateCamera = matrix([
+        [1,0,0,1],          // o 1 meter na ose X (smerom do stredu kolajnic)
+        [0,1,0,-0.4],       // -0.4m na ose Y (vertikalna os smerom hore)
+        [0,0,1,0]
+    ])
+    //var sMatrix5 = multiply(mirrorXYCoordinate, sMatrix4);
+
+    //console.log(sMatrix4);  //vysledna projekcna matica
     
 
     var noOfpoints = 0;
@@ -142,52 +149,34 @@ const Controls = () => {
             ctx.fillStyle = "red";
 
             for (let i = 0; i < points.geometry.attributes.position.array.length / 3 - 5 ; i++) {
-                /*
-                var pointX = points.geometry.attributes.position.array[i*3];
-                var pointY = points.geometry.attributes.position.array[i*3 + 1];
-                var pointZ = points.geometry.attributes.position.array[i*3 + 2];
-                */
-                //var WCScoords = matrix([[points.geometry.attributes.position.array[i*3]], [points.geometry.attributes.position.array[i*3 + 1]], [points.geometry.attributes.position.array[i*3 + 2]], [1]]);
-                
                 var WCSMinusCamera = matrix([[points.geometry.attributes.position.array[i*3] - t3], [points.geometry.attributes.position.array[i*3 + 1] - t2], [points.geometry.attributes.position.array[i*3 + 2] - t1]]);
 
-                /* ZJEDNODUSENE
-                var CCScoords = multiply(swapCoords, WCSMinusCamera );      //suradnice v Camera Coordinate frame, vypocitane odcitanim kamery a naslednym rotovanim
-                
-                var CCScoordsRotZ = multiply(rotateZaxis,CCScoords)
 
-                var CCScoordsRotX = multiply(rotateXaxis, CCScoordsRotZ)
 
-                var CCScoordsRot = multiply(rotateYaxis, CCScoordsRotX)
-
-                //var CCScoords2 = multiply(exmatrixNew, WCScoords);      //suradnice v Camera Coordinate frame, vypocitane vytvorenim jednej  4x3 matice a vynasobenim so suradnicami
-
-                var pixCoords = multiply(inMatrix, CCScoordsRot);
+                var CCScoords = multiply(sMatrix4, WCSMinusCamera);     //vymenenie osi, rotacie
+                /*
+                if(i % 10000 == 0){
+                    console.log(i)
+                    console.log(CCScoords)
+                    console.log(CCScoords._data[0][0])
+                }
                 */
 
-                var pixCoords = multiply(sMatrix5, WCSMinusCamera);
-
-                /* ZJEDNODUSENE
-                var pixCoordsX = pixCoords._data[0] / pixCoords._data[2];
-                var pixCoordsY = pixCoords._data[1] / pixCoords._data[2];
-                var pixCoordsPreMirrored = matrix([
-                    [pixCoordsX],
-                    [pixCoordsY],
+                var preTranslation = matrix([   
+                    [CCScoords._data[0][0]],
+                    [CCScoords._data[1][0]],
+                    [CCScoords._data[2][0]],
                     [1]
                 ])
                 
+                
+                var translated = multiply(translateCamera, preTranslation)          //posun o 1m a 0.4m
+                var unmirrored = multiply(inMatrix, translated);                    //kalibracna matica
+                var pixCoords = multiply(mirrorXYCoordinate, unmirrored);           //zrkadlove obratenie
+                
+                
+                //var pixCoords = multiply(sMatrix5, WCSMinusCamera);    //main
 
-                var mirroredPixCoords = multiply(mirrorXYCoordinate, pixCoordsPreMirrored);
-                */
-
-                /*
-                if(i%10000 == 0){
-                    console.log(i);
-                    console.log(pixCoordsPreMirrored);
-                    console.log(mirrorXYCoordinate);
-                    console.log(mirroredPixCoords)
-                }
-                */
 
                 var pixCoordsX = pixCoords._data[0] / pixCoords._data[2]
                 var pixCoordsY = pixCoords._data[1] / pixCoords._data[2]
@@ -204,7 +193,6 @@ const Controls = () => {
             ctx.fillRect(0, 0, 5, 5);
             ctx.fillRect(20, 20, 5, 5);
         console.log("amount of shown points: ",noOfpoints);
-        console.log(pi);
             
 
         }, 
