@@ -20,9 +20,9 @@ const Controls = () => {
     var gamma = -0.07677646139145230531;
 
     //nacitanie hodnot z transformacnej matice
-    var t1 = -0.08166290388991392923;
-    var t2 = -0.06948978603737683557;
-    var t3 = 5.705343872886297518;
+    var t1 = -0.4069576531966190291;
+    var t2 = -0.3975806851939489572;
+    var t3 = 26.37227916275143258;
 
     //nacitanie hodnot z kalibracnej matice
     var inMatrix = matrix([ 
@@ -79,9 +79,9 @@ const Controls = () => {
         [0,0,1]
     ])
 
-    var xRotAngle = -0.0029755535;
-    var yRotAngle = 0.0053582128;
-    var zRotAngle = -0.001340002;
+    var xRotAngle = 0.0023341923;
+    var yRotAngle = 0.0067730291;
+    var zRotAngle = -0.0046308535;
 
     //otocenie na osi Z
     var rotateZaxis = matrix([
@@ -104,19 +104,23 @@ const Controls = () => {
         [-sin(yRotAngle), 0, cos(yRotAngle)]
     ])
 
+    var rotateZ180 = matrix([
+        [ -1, -1.2246467991473532e-16, 0,0 ],
+        [ 1.2246467991473532e-16, -1, 0,0 ],
+        [ 0, 0, 1,0 ]
+    ])
 
-    //tets
 
     //zjednodusenie maticoveho nasobenia
     //var sMatrix1 = multiply(inMatrix,rotateXaxis); // posledna
-    var sMatrix2 = multiply(rotateZaxis, rotateYaxis); //druha
-    var sMatrix3 = multiply(sMatrix2, rotateXaxis); // prva
-    var sMatrix4 = multiply(sMatrix3, swapCoords);
+    var sMatrix2 = multiply(rotateZaxis, rotateYaxis); //tretia, druha
+    var rotmatrix = multiply(sMatrix2, rotateXaxis); // prva
 
     var translateCamera = matrix([
         [1,0,0,1],          // o 1 meter na ose X (smerom do stredu kolajnic)
         [0,1,0,-0.4],       // -0.4m na ose Y (vertikalna os smerom hore)
-        [0,0,1,0]
+        [0,0,1,0],
+        [0,0,0,1]
     ])
     //var sMatrix5 = multiply(mirrorXYCoordinate, sMatrix4);
 
@@ -149,11 +153,11 @@ const Controls = () => {
             ctx.fillStyle = "red";
 
             for (let i = 0; i < points.geometry.attributes.position.array.length / 3 - 5 ; i++) {
-                var WCSMinusCamera = matrix([[points.geometry.attributes.position.array[i*3] - t3], [points.geometry.attributes.position.array[i*3 + 1] - t2], [points.geometry.attributes.position.array[i*3 + 2] - t1]]);
+                var WCSMinusCamera = matrix([[points.geometry.attributes.position.array[i*3 + 1] - t1], [points.geometry.attributes.position.array[i*3 + 2] - t2], [points.geometry.attributes.position.array[i*3] - t3]]);
 
+                
 
-
-                var CCScoords = multiply(sMatrix4, WCSMinusCamera);     //vymenenie osi, rotacie
+                //var CCScoords = multiply(rotmatrix, WCSMinusCamera);     //vymenenie osi, rotacie
                 /*
                 if(i % 10000 == 0){
                     console.log(i)
@@ -163,24 +167,45 @@ const Controls = () => {
                 */
 
                 var preTranslation = matrix([   
-                    [CCScoords._data[0][0]],
-                    [CCScoords._data[1][0]],
-                    [CCScoords._data[2][0]],
+                    [WCSMinusCamera._data[0][0]],
+                    [WCSMinusCamera._data[1][0]],
+                    [WCSMinusCamera._data[2][0]],
                     [1]
                 ])
                 
                 
                 var translated = multiply(translateCamera, preTranslation)          //posun o 1m a 0.4m
-                var unmirrored = multiply(inMatrix, translated);                    //kalibracna matica
-                var pixCoords = multiply(mirrorXYCoordinate, unmirrored);           //zrkadlove obratenie
+
+                /*
+                if(i == 1 ){
+                    console.log(translated);
+                    console.log(rotmatrix)
+                }
+                */
+
+                var rotated = multiply(rotateZ180, translated);
+                var rotated2 = multiply(rotmatrix, rotated);
+                var unmirrored = multiply(inMatrix, rotated2);                  //unmirrored = p
+                
+                //var pixCoords = unmirrored;
+                //var pixCoords = multiply(mirrorXYCoordinate, unmirrored);           //zrkadlove obratenie
                 
                 
-                //var pixCoords = multiply(sMatrix5, WCSMinusCamera);    //main
 
+                if(i==1){
+                    console.log("pX:, pY, scale:");
+                    console.log(unmirrored);
+                }
 
-                var pixCoordsX = pixCoords._data[0] / pixCoords._data[2]
-                var pixCoordsY = pixCoords._data[1] / pixCoords._data[2]
+                var pixCoordsX = unmirrored._data[0] / unmirrored._data[2];
+                var pixCoordsY = unmirrored._data[1] / unmirrored._data[2];
 
+                if(i==1){
+                    console.log("x:");
+                    console.log(pixCoordsX);
+                    console.log("y:");
+                    console.log(pixCoordsY);
+                }
 
                 if(pixCoordsX < 2000 && pixCoordsX > 0 && pixCoordsY < 2000 && pixCoordsY > 0 ){
                     noOfpoints += 1;

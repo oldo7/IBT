@@ -20,7 +20,7 @@ const Video = () => {
 
     return ( 
         <div>
-        {overlayShown && <img id="templateImage" src="1.png"></img>}
+        {overlayShown && <img id="templateImage" src="new100.png"></img>}
         <button onClick={handleSwitchOverlay}>Show overlay</button>
         </div>
      );
