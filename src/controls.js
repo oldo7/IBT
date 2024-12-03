@@ -207,7 +207,7 @@ const Controls = () => {
                     console.log(pixCoordsY);
                 }
 
-                if(pixCoordsX < 2000 && pixCoordsX > 0 && pixCoordsY < 2000 && pixCoordsY > 0 ){
+                if(pixCoordsX < 2048 && pixCoordsX > 0 && pixCoordsY < 1536 && pixCoordsY > 0 && unmirrored._data[2] > 1 ){
                     noOfpoints += 1;
                     //console.log("drawing dot on: ", pixCoordsX, pixCoordsY);
                     ctx.fillRect(pixCoordsX, pixCoordsY, 0.5, 0.5);
